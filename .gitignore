@@ -1,0 +1,7 @@
+# Data files
+.tif
+.mat
+
+# Compiled object files
+.mexa64
+.mexmaci64

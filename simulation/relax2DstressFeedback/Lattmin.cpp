@@ -72,18 +72,18 @@ int MinimizeWithGSL(double *vertsout, GLattice *inLattice, int maxIter)
         
         // GSL_ENOPROG signifies that the minimizer is unable to improve
         if (status == GSL_ENOPROG){
-            mexPrintf ("No progess: stop; iterations: %d \n", iter);
+            // mexPrintf ("No progess: stop; iterations: %d \n", iter);
             break;
         }
         
         // tests the norm of the gradient g against the absolute tolerance epsab
         // return GSL_SUCCESS if |g| < epsabs
         status = gsl_multimin_test_gradient (s->gradient, 1e-5);
-        if (status == GSL_SUCCESS) mexPrintf ("Minimum found after %d iterations\n", iter);
+        // if (status == GSL_SUCCESS) mexPrintf ("Minimum found after %d iterations\n", iter);
         
         iter++;
     };
-    if (iter == maxIter) mexPrintf ("Reached max iterations: %d \n", iter);
+    // if (iter == maxIter) mexPrintf ("Reached max iterations: %d \n", iter);
     
     /* -----------------------------------------------
      * copy result to output variables and clean up
@@ -121,7 +121,7 @@ void mexFunction( int nlhs, mxArray *plhs[],
     # define kA0        prhs[9]
 
     int maxIter = (int)(*mxGetPr(prhs[10]));
-    mexPrintf("max iterations %d\n", maxIter);
+    // mexPrintf("max iterations %d\n", maxIter);
     
     // define outputs
     # define VERTSOUT       plhs[0]
@@ -136,7 +136,8 @@ void mexFunction( int nlhs, mxArray *plhs[],
     
     // pointers to output data
     double *vertsout, *status, *energy, *tensionForce, *pressureForce, *perimeterForce, *area, *tension, *cf;
-    int dims[2];
+    // int dims[2];
+    mwSize dims[2];
     
     // create main graph structure
     GLattice *Lattice = Graph_Init(VERTS, BONDS, CELLS, SCALEPARAM, T0, A0, PERIM0, l0, PT0, kA0);
@@ -172,8 +173,8 @@ void mexFunction( int nlhs, mxArray *plhs[],
     tension = mxGetPr(TENSION);
     
     // return cell force
-    dims[0] = Lattice->ncells;
-    dims[1] = 1;
+    dims[0] = (mwSize) Lattice->ncells;
+    dims[1] = (mwSize) 1;
     CELLFORCE = mxCreateCellArray(1, dims);
 
     // there is probably a better way to do it than copying values

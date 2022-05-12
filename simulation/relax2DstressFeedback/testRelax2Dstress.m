@@ -4,20 +4,22 @@ close all;
 [testScriptPath,~,ext] = fileparts(matlab.desktop.editor.getActiveFilename);
 cd(testScriptPath);
 addpath(genpath(testScriptPath));
-addpath(genpath('/Users/idse/repos/mechanicalFeedback/simulation/general_functions'));
-addpath(genpath('/Users/idse/repos/epitheliumAnalysis'));
+addpath(genpath('/home/dillon/Documents/MATLAB/mechanicalFeedback/simulation'));
+addpath(genpath('/home/dillon/Documents/MATLAB/epitheliumAnalysis'));
 %compile
 
 %%
+clear; close all; clc;
 %-----------------------------------------
 % GENERATE INITIAL LATTICE
 %-----------------------------------------
+close all; clc;
 
 %addpath('./utils');
 
-N = 1;
+N = 5;
 a = 1;
-noise = 0;
+noise = 0.5;
 
 initialScale = 1;%1.41102
 
@@ -65,7 +67,7 @@ g.clones = NaN*(1:numel(g.cells))';
 clsubset = [];%[8 19];%[2];
 g.clones(clsubset) = 1;%1:numel(clsubset);
 
-actualArea = [];
+actualArea = zeros(numel(g.cells), 1);
 for i = 1:numel(g.cells)
     X = g.verts(g.bonds(g.cells{i},1),1);
     Y = g.verts(g.bonds(g.cells{i},1),2);
@@ -82,6 +84,31 @@ g.pT0(g.clones==1) = 0.5*g.pT0(g.clones==1);
 
 clf
 LatticePresentation2(g,struct('cellIndex',true))
+
+% Simulation parameters g.param:
+%
+% param(1): Prefactor for cell area energy
+%       - p1 * kA0 * (A-A0).^2 / 2 OR
+%       - p1 * A / A0
+%
+% param(2): Prefactor for cell perimeter tension term
+%       - p2 * pT0 * p.^(1+p6)
+%
+% param(3): Prefactor for cell perimeter elasticity term
+%       - p3 * (p-p0).^2 / 2
+%
+% param(4): Prefactor for bond length tension term
+%       - p4 * T0 * l^(1+p6)
+%
+% param(5): Prefctor for bond length elasticity term
+%       - p5 * (l-l0)^2 / 2
+%
+% param(6): Used as exponent in tension terms
+
+
+% ONLY CALCULATES Earea if param(1) > 0
+% ONLY CALCULATES Eperim if (param(2) > 0 || param(3) > 0)
+% ONLY CALCULATES Ebond if (param(4) > 0 || param(5) > 0)
 
 % area, perimeter, bond tension, bond hookean
 g.param = [1 0 0 1];
@@ -103,8 +130,11 @@ LatticePresentation2(g, struct('transparent',true, 'edgeColor',ect, 'edgeColorAb
 %compile
 clf
 a = 1;
-pT = 0.5; pH = 0; 
-bT = 0; bH = 0; alpha = 0;%-1/2;
+pT = 0; % 0.5;
+pH = 1; % 0; 
+bT = 0;
+bH = 0;
+alpha = 0;%-1/2;
 
 dispRange = [0.3 0.5];
 
@@ -115,9 +145,9 @@ g.param = [a pT pH bT bH alpha];
 
 %figure, LatticePresentation2(gfinal); %LatticePresentation(g,0,'b');
 clf
-LatticePresentation2(g,struct('cellIndex',true))
+LatticePresentation2(g,struct('cellIndex',false))
 
-maxiter = 1000;
+maxiter = 10000;
 gfinal = relaxEpithelium2D(g, maxiter);
 %mean(gfinal.T)
 
@@ -128,10 +158,10 @@ ct = gfinal.stress;
 ct(isnan(ct))=0;
 
 clf
-%LatticePresentation2(gfinal, struct('transparent',true, 'edgeColor','b'))
-LatticePresentation2(gfinal, struct('transparent', false, 'cellIndex',true, 'edgeColor',ect,...
- 'edgeColorRange', dispRange, 'colorTable', ct, 'transparentColor', 0))
-
+ LatticePresentation2(gfinal, struct('transparent',true, 'edgeColor','b'))
+% LatticePresentation2(gfinal, struct('transparent', false, 'cellIndex',false, 'edgeColor',ect,...
+%  'edgeColorRange', dispRange, 'colorTable', ct, 'transparentColor', 0))
+%%
 hold on  
 
 % %visualize forces

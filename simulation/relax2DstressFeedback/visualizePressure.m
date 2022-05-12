@@ -1,6 +1,10 @@
 function visualizePressure(g, options)
     
-    L = options.L;
+    if isfield(options, 'L')
+        L = options.L;
+    else
+        L = 1.1 * max(abs(g.verts(:)));
+    end
 
     options.edgeColor = sumTension(g);  %,'colorTable',g.A);
     options.transparent = false;
@@ -21,8 +25,17 @@ function visualizePressure(g, options)
         faces(ci,1:numel(C)) = bonds(C,1);
     end
     
-    minVal = options.pDispRange(1);
-    maxVal = options.pDispRange(2);
+    if isfield(options, 'pDispRange')
+
+        minVal = options.pDispRange(1);
+        maxVal = options.pDispRange(2);
+
+    else
+
+        minVal = -max(abs(CT(:)));
+        maxVal = max(abs(CT(:)));
+
+    end
     
     cmap = jet(256);
     colorsIdx = round(255*min(CT - minVal, maxVal-minVal)/(maxVal-minVal) + 1);

@@ -25,8 +25,8 @@ double EcellArea(GLattice *L){
         // area elasticity
         L->A[i] = CellArea(i,L);
 
-        //energy += c*kA0[i]*(L->A[i] - A0[i])*(L->A[i]- A0[i])/2;
-        energy += c*A0[i]/L->A[i];
+        energy += c*kA0[i]*(L->A[i] - A0[i])*(L->A[i]- A0[i])/2;
+        // energy += c*A0[i]/L->A[i];
     }
     
     //mexPrintf("cell energy %f\n", energy);
@@ -63,10 +63,10 @@ void dEcellArea(GLattice *L, double *dEdx, double *dEdy){
             vpi = L->Bonds[ L->Cells[i].Bonds[j] ].v2;
             
             // energy = (A-A0)^2/2
-            //prefactor = c*kA0[i]*(A-A0[i])/2;
+            prefactor = c*kA0[i]*(A-A0[i])/2;
             
             // energy = 1/A
-            prefactor = -c*A0[i]/(2*A*A);
+            // prefactor = -c*A0[i]/(2*A*A);
             
             // update energy gradient
             dEdx[vi] += prefactor*(L->Verts[vpi].y - L->Verts[vmi].y);

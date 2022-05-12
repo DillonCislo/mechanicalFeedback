@@ -143,9 +143,9 @@ double CellArea(int icell, GLattice *L)
         // calculating areas relative to CM allows for roughly testing self intersection or extreme concavity
         da = (v1.x - CM.x)*(v2.y - CM.y) - (v2.x - CM.x)*(v1.y - CM.y);
         
-        if (da < 0) {
-            mexPrintf("-ve area contrib cell %d\n", icell);
-        }
+        // if (da < 0) {
+        //     mexPrintf("-ve area contrib cell %d\n", icell);
+        // }
         area += da;
     }
     area *= 0.5;
