@@ -2,6 +2,12 @@ function t1idx = decideT1BoundaryAngle(g, angMin)
 % DECIDET1BOUNDARYANGLE Determine if any edges should undergo a T1
 % transition. Boundary edges undergo a T1 transition if their external
 % angle is less than a user-supplied minimum length.
+%
+%   2       1             3
+%    \     /              |
+%  c2 \   / c1  ===>      |    
+%      \ /                |
+%       0                 0
 
 if isempty(angMin)
     t1idx = [];
@@ -12,14 +18,16 @@ end
 % Generate the CCW Oriented Polygon Defining the Tissue Boundary
 %--------------------------------------------------------------------------
 % NOTE: This method assumes that all cells are already CCW oriented
-% internally and that no boundary antibonds are maintained iwthin the cell
+% internally and that no boundary antibonds are maintained within the cell
 % lattice graph. It also assumes that the boundary polygon is simple and
 % non-intersecting
 
 % bdyCell = struct();
 
 % The IDs of the boundary bonds in the global boundary list
-bdyBondIDx = find( (g.bonds(:,3) ~= 0) & (g.bonds(:,4) == 0) );
+assert(~any(g.bonds(:,3) == 0), 'Cell lattice contains boundary bonds');
+bdyBondIDx = find(g.bonds(:,4) == 0);
+% bdyBondIDx = find( (g.bonds(:,3) ~= 0) & (g.bonds(:,4) == 0) );
 
 % Local IDs for the boundary bonds
 % locBondIDx = (1:numel(bdyBondIDx)).';
@@ -70,6 +78,14 @@ if (tissueArea < 0)
     % bondCells = bondCells(:, [2 1]);
 end
 
+if ~isequal(bonds(:,1), circshift(bonds(:,2), [1 0]))
+    bonds = flipud(bonds);
+    bdyBondIDx = flipud(bdyBondIDx);
+    if ~isequal(bonds(:,1), circshift(bonds(:,2), [1 0]))
+        error('Invalid boundary polygon construction');
+    end
+end
+
 %--------------------------------------------------------------------------
 % Determine Which Boundary Edges are Degenerate
 %--------------------------------------------------------------------------
@@ -85,12 +101,14 @@ edgeNormals = edgeNormals ./ sqrt(sum(edgeNormals.^2, 2));
 % Edges are parallel if bendAngles(i) == 0
 % Vertex is convex if bendAngles(i) > 0
 % Vertex is concave if bendAngles(i) < 0
-en2 = circshift(edgeNormals, [1 0]);
+en2 = circshift(edgeNormals, [-1 0]);
 bendAngles = cross(edgeNormals, en2, 2);
-bendAngles = dot(bendAngles, repmat([0 0 1], size(bendAngles, 1), 1), 2);
+bendAngles = bendAngles(:,3);
+% bendAngles = dot(bendAngles, repmat([0 0 1], size(bendAngles, 1), 1), 2);
 bendAngles = 2 * atan2( bendAngles, 1 + dot(edgeNormals, en2, 2));
 
-allDegenerateEdges = bendAngles < (-pi+angMin);
+allDegenerateEdges = (bendAngles < (-pi+angMin));
+allDegenerateEdges = allDegenerateEdges | ((pi-angMin) < bendAngles);
 if ~any(allDegenerateEdges)
     t1idx = [];
     return;
@@ -102,8 +120,12 @@ end
 t1idx = []; %-ones(sum(allDegenerateAngles), 1);
 
 wrapN = @(x, N) (1 + mod(x-1, N)); % Circular indexing function
-mergeID1 = find(allDegenerateEdges);
-mergeID2 = wrapN(mergeID1-1, size(edgeNormals, 1));
+% mergeID1 = find(allDegenerateEdges);
+% mergeID2 = wrapN(mergeID1+1, size(edgeNormals, 1));
+mergeID1 = find(bendAngles < (-pi+angMin));
+mergeID1 = [mergeID1; ...
+    wrapN(find((pi-angMin) < bendAngles), size(edgeNormals, 1)) ];
+mergeID2 = wrapN(mergeID1+1, size(edgeNormals, 1));
 
 while ~isempty(mergeID1)
 

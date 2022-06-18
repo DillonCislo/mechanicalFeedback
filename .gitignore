@@ -1,7 +1,7 @@
 # Data files
-.tif
-.mat
+*.tif
+*.mat
 
 # Compiled object files
-.mexa64
-.mexmaci64
+*.mexa64
+*.mexmaci64

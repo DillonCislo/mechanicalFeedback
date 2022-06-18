@@ -72,4 +72,9 @@ newg.l0(nbi(5:6)) = l0old(2);
 % Inherit clonal identity;
 newg.clones = cat(1, newg.clones, gcur.clones(ci));
 
+% Inherit row identity
+if isfield(newg, 'row')
+    newg.row = cat(1, newg.row, gcur.row(ci));
+end
+
 end

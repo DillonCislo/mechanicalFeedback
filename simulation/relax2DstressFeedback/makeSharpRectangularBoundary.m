@@ -1,6 +1,6 @@
 function [vNew, cNew] = ...
     makeSharpRectangularBoundary(v, c, xLim, yLim, cellSize, ...
-    collapseEdges, pickCornerPoints)
+    collapseEdges, pickCornerPoints, customPoints)
 %MAKESHARPRECTANGULARBOUNDARY Shifts vertices so that a polygonal tiling of
 %a simply connected region of the plane occupies a rectangular domain
 %
@@ -15,7 +15,9 @@ function [vNew, cNew] = ...
 %       - collapseEdges: If true, collinear points within the same cells
 %                        will be collapsed to share a single edge
 %       - pickCornerPoints: If true, the user will be prompted to pick the
-%                           four corner points 
+%                           four corner points
+%       - customPoints:     Allow the use to supply the corner vertex IDs
+%                           directly
 %
 %   OUTPUT PARMETERS:
 %
@@ -27,6 +29,7 @@ function [vNew, cNew] = ...
 % Input Processing --------------------------------------------------------
 if (nargin < 5), collapseEdges = true; end
 if (nargin < 6), pickCornerPoints = false; end
+if (nargin < 7), customPoints = []; end
 
 maxXVal = xLim(2);  minXVal = xLim(1);
 assert(xLim(1) < xLim(2), 'Invalid horizontal domain limits');
@@ -84,7 +87,32 @@ assert(size(bdyEdges,1) == numel(bdyVertIDx), ...
 %  \/        e1         |
 %   c1 ---------------> c2
 
-if pickCornerPoints
+if ~isempty(customPoints)
+
+    v1i = customPoints(1);
+    v2i = customPoints(2);
+    v3i = customPoints(3);
+    v4i = customPoints(4);
+
+    shift = find(bdyEdges(:,1) == v1i)-1;
+    bdyEdges = circshift(bdyEdges, [-shift 0]);
+
+    e1IDx = false(size(bdyEdges, 1), 1);
+    e1IDx(find(bdyEdges(:,1) == v1i):find(bdyEdges(:,2) == v2i)) = true;
+
+    e2IDx = false(size(bdyEdges, 1), 1);
+    e2IDx(find(bdyEdges(:,1) == v2i):find(bdyEdges(:,2) == v3i)) = true;
+    
+    e3IDx = false(size(bdyEdges, 1), 1);
+    e3IDx(find(bdyEdges(:,1) == v3i):find(bdyEdges(:,2) == v4i)) = true;
+    
+    e4IDx = false(size(bdyEdges, 1), 1);
+    e4IDx(find(bdyEdges(:,1) == v4i):end) = true;
+
+    assert(sum([e1IDx; e2IDx; e3IDx; e4IDx]) == size(bdyEdges,1), ...
+        'Bad edge orientation segregation');
+
+elseif pickCornerPoints
 
     maxFaceSize = max(cellfun(@(x) numel(x), c));
     voronoiFace = nan(size(c,1), maxFaceSize);
@@ -121,6 +149,8 @@ if pickCornerPoints
     v2i = bdyVertIDx(knnsearch(v(bdyVertIDx, :), v2));
     v3i = bdyVertIDx(knnsearch(v(bdyVertIDx, :), v3));
     v4i = bdyVertIDx(knnsearch(v(bdyVertIDx, :), v4));
+
+    disp([v1i v2i v3i v4i]);
 
     shift = find(bdyEdges(:,1) == v1i)-1;
     bdyEdges = circshift(bdyEdges, [-shift 0]);
